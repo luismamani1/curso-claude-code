@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kōhi — Iniciar sesión</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+
+  <div class="form-container">
+    <div class="form-card">
+      <div class="brand">
+        <h1>Kōhi</h1>
+        <p>Accede a tu lugar en la lista</p>
+      </div>
+
+      <div id="alert" class="alert" style="display:none"></div>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="tu@email.com" autocomplete="email" />
+          <div class="field-error" id="email-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" name="password" placeholder="Tu contraseña" autocomplete="current-password" />
+          <div class="field-error" id="password-error"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
+          Iniciar sesión
+        </button>
+      </form>
+
+      <div class="form-footer">
+        ¿No tienes cuenta? <a href="/register.html">Únete a la lista de espera</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('kohi_token')) {
+      window.location.href = '/dashboard.html';
+    }
+
+    function showAlert(msg, type = 'error') {
+      const el = document.getElementById('alert');
+      el.textContent = msg;
+      el.className = 'alert alert-' + type;
+      el.style.display = 'block';
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      document.getElementById('alert').style.display = 'none';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        showAlert('Por favor completa todos los campos.');
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Ingresando...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showAlert(data.error || 'Credenciales incorrectas.');
+          return;
+        }
+
+        localStorage.setItem('kohi_token', data.token);
+        localStorage.setItem('kohi_user', JSON.stringify(data.user));
+        window.location.href = '/dashboard.html';
+      } catch {
+        showAlert('Error de conexión. Intenta de nuevo.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Iniciar sesión';
+      }
+    });
+  </script>
+
+</body>
+</html>
