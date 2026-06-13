@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kōhi — Mi lugar</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+</head>
+<body>
+
+  <div class="dashboard">
+    <header class="dashboard-header">
+      <span class="logo">Kōhi</span>
+      <button class="btn btn-ghost" id="logout-btn" style="font-size:0.85rem;padding:0.5rem 1.2rem">
+        Cerrar sesión
+      </button>
+    </header>
+
+    <div class="dashboard-body" id="dashboard-content" style="display:none">
+      <p class="welcome-text">Bienvenido/a,</p>
+      <h2 class="welcome-name" id="user-name"></h2>
+
+      <div class="position-card">
+        <div class="position-label">Tu posición en la lista de espera</div>
+        <div class="position-number" id="position-number">—</div>
+        <div class="position-sub" id="position-sub"></div>
+      </div>
+
+      <div class="qr-card">
+        <h3>Tu invitación</h3>
+        <p>Presenta este código QR el día de la inauguración para acceder como invitado especial.</p>
+        <canvas id="qr-canvas"></canvas>
+        <div class="invite-code" id="invite-code-text"></div>
+      </div>
+    </div>
+
+    <div id="loading" style="text-align:center;padding:4rem;color:#8a7060">
+      Cargando tu información...
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('kohi_token');
+
+    if (!token) {
+      window.location.href = '/login.html';
+    }
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem('kohi_token');
+          localStorage.removeItem('kohi_user');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const data = await res.json();
+
+        document.getElementById('user-name').textContent = data.name;
+        document.getElementById('position-number').textContent = '#' + data.waitlist_position;
+        document.getElementById('position-sub').textContent =
+          data.total_registered > 1
+            ? `de ${data.total_registered} personas registradas`
+            : 'Eres el primero en la lista 🎉';
+
+        document.getElementById('invite-code-text').textContent = 'Código: ' + data.invite_code;
+
+        QRCode.toCanvas(
+          document.getElementById('qr-canvas'),
+          data.invite_code,
+          { width: 200, color: { dark: '#2c1a0e', light: '#ffffff' } }
+        );
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'block';
+      } catch {
+        document.getElementById('loading').textContent = 'Error al cargar los datos.';
+      }
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('kohi_token');
+      localStorage.removeItem('kohi_user');
+      window.location.href = '/';
+    });
+
+    loadDashboard();
+  </script>
+
+</body>
+</html>

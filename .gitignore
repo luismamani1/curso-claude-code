@@ -1,0 +1,5 @@
+node_modules/
+.env
+kohi.db
+test-results/
+playwright-report/
