@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kōhi — Mi lugar</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+
+  <div class="dashboard">
+    <header class="dashboard-header">
+      <span class="logo">Kōhi</span>
+      <button class="btn btn-ghost btn-sm" id="logout-btn">
+        Cerrar sesión
+      </button>
+    </header>
+
+    <div class="dashboard-body hidden" id="dashboard-content">
+      <p class="welcome-text">Bienvenido/a,</p>
+      <h2 class="welcome-name" id="user-name"></h2>
+
+      <div class="position-card">
+        <div class="position-label">Tu posición en la lista de espera</div>
+        <div class="position-number" id="position-number">—</div>
+        <div class="position-sub" id="position-sub"></div>
+
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span>Inicio de lista</span>
+            <span id="progress-label">—</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="qr-card">
+        <h3>Tu invitación</h3>
+        <p>Presenta este código el día de la inauguración para acceder como invitado especial.</p>
+        <div class="qr-fake">
+          <span class="qr-label" id="qr-label"></span>
+        </div>
+        <div class="invite-code" id="invite-code-text"></div>
+      </div>
+    </div>
+
+    <div id="loading">Cargando tu información…</div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('kohi_token');
+    if (!token) window.location.href = '/login.html';
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem('kohi_token');
+          localStorage.removeItem('kohi_user');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const data = await res.json();
+        const pos   = data.waitlist_position;
+        const total = data.total_registered;
+
+        document.getElementById('user-name').textContent = data.name;
+        document.getElementById('position-number').textContent = '#' + pos;
+        document.getElementById('position-sub').textContent =
+          total > 1
+            ? `Eres el #${pos} de ${total} personas registradas`
+            : 'Eres el primero en la lista';
+
+        const pct = total > 1 ? Math.round(((total - pos) / (total - 1)) * 100) : 100;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('progress-label').textContent = pct + '% hacia la apertura';
+
+        const shortId = 'QR-' + (data.invite_code || '').slice(0, 8).toUpperCase();
+        document.getElementById('qr-label').textContent = shortId;
+        document.getElementById('invite-code-text').textContent = 'Código: ' + data.invite_code;
+
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+
+      } catch {
+        document.getElementById('loading').textContent = 'Error al cargar los datos. Recarga la página.';
+      }
+    }
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('kohi_token');
+      localStorage.removeItem('kohi_user');
+      window.location.href = '/';
+    });
+
+    loadDashboard();
+  </script>
+
+</body>
+</html>
