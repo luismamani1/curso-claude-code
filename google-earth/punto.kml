@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+<Document>
+  <name>Punto 16°35'49.33"S 66°43'25.83"W</name>
+  <Placemark>
+    <name>Punto marcado</name>
+    <description>16°35'49.33"S 66°43'25.83"W (decimal: -16.597036, -66.723842)</description>
+    <Point><coordinates>-66.7238417,-16.5970361,0</coordinates></Point>
+  </Placemark>
+  <LookAt><longitude>-66.7238417</longitude><latitude>-16.5970361</latitude><range>4000</range></LookAt>
+</Document>
+</kml>
